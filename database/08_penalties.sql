@@ -1,0 +1,28 @@
+CREATE TABLE IF NOT EXISTS nhl.penalties (
+    "season_uid" INTEGER,
+    "season_type" INTEGER,
+    "game_uid" INTEGER,
+    "sequence" INTEGER,
+    "date" DATE,
+    "period_type" TEXT,
+    "period_number" INTEGER,
+    "home" BOOLEAN,
+    "time_elapsed" TEXT,
+    "time_remaining" TEXT,
+    "zone" CHAR(2),
+    "strength" TEXT,
+    "athlete_uid" INTEGER,
+    "team_uid" INTEGER,
+    "class" TEXT,
+    "type" TEXT,
+    "duration" INTEGER,
+    "x" NUMERIC,
+    "y" NUMERIC,
+    "culprit" BOOLEAN,
+    "created_source" VARCHAR(255) NOT NULL,
+    "created_timestamp" TIMESTAMPTZ NOT NULL,
+    "modified_source" VARCHAR(255) NOT NULL,
+    "modified_timestamp" TIMESTAMPTZ NOT NULL,
+
+    PRIMARY KEY ("game_uid", "season_uid", "season_type", "sequence", "athlete_uid")
+);

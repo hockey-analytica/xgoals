@@ -1,0 +1,27 @@
+services:
+  database:
+    image: postgres:18.2
+    ports:
+      - "5432:5432"
+    environment:
+      TZ: America/New_York
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: database
+    volumes:
+      - ./database:/docker-entrypoint-initdb.d
+
+  backend:
+    profiles: ["jobs"]
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    environment:
+      TZ: America/New_York
+      USER: postgres
+      PASS: password
+      HOST: database
+      PORT: 5432
+      NAME: database
+    volumes:
+      - ./models:/models
