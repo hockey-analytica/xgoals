@@ -53,6 +53,9 @@ sudo curl -fsSL https://get.docker.com | sh
 
 # Git LFS Installation Command (Any)
 git lfs install
+
+# Clone Repository
+git clone https://github.com/hockey-analytica/xgoals.git
 ```
 
 ## Getting Started
@@ -118,8 +121,16 @@ You should run `truncate public.logs` on the database between each new round of 
 You can use the [evaluation.sql](evaluation.sql) script to observe the evalution metrics of the inference data. This is the same script we used for evaluating our model results.
 
 ## Short Instructions
-### Install Docker
-Use this link to install: `https://docs.docker.com/get-started/get-docker/`.
+### Install Docker and Git LFS
+`Docker` installation can be found at [https://docs.docker.com/get-started/get-docker/](https://docs.docker.com/get-started/get-docker/). `Git LFS` installation can be found at [https://git-lfs.com/](https://git-lfs.com/).
+
+```bash
+# Docker Installation Command (Linux)
+sudo curl -fsSL https://get.docker.com | sh
+
+# Git LFS Installation Command (Any)
+git lfs install
+```
 
 ### Setup Database
 ```bash
