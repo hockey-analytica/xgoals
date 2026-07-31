@@ -8,7 +8,7 @@
   - [Short Instructions](#short-instructions)
 
 # Introduction
-Welcome to Hockey Analytica's open-source xGoals model! For general readers, this document includes an article (work-in-progress) dedicated to how we built our xGoals model, what we learned, and how it performed. For developers looking to experiment with our model, there is a developers segment at the end which documents what you need to work with our repository. Input from both general readers and developers is welcomed!
+Welcome to the [hockeyanalytica.com](https://hockeyanalytica.com/) open-source xGoals model! For general readers, this document includes an article (work-in-progress) dedicated to how we built our xGoals model, what we learned, and how it performed. For developers looking to experiment with our model, there is a developers segment at the end which documents what you need to work with our repository. Input from both general readers and developers is welcomed!
 
 # Article
 This article is a work-in-progress, but will be updated. The only content currently present in this segment is the [Feature Dictionary](#feature-dictionary).
@@ -45,11 +45,14 @@ This repository is (mostly) a copy + paste of the actual code used by the server
 If you prefer instant gratification or are eager to start, you can skip to the [Short Instructions](#short-instructions) segment.
 
 ## Requirements
-The only requirement for this repository is `Docker`, which can be installed on your machine from [https://docs.docker.com/get-started/get-docker/](https://docs.docker.com/get-started/get-docker/). If you are not using linux, you may need to change the image used inside the [Dockerfile](backend/Dockerfile) to avoid errors. If you are using linux, we suggest you install docker using the below command.
+The only requirements for this repository are `Docker`, which can be installed on your machine from [https://docs.docker.com/get-started/get-docker/](https://docs.docker.com/get-started/get-docker/), and `Git LFS` (for the data) from [https://git-lfs.com/](https://git-lfs.com/). If you are not using linux, you may need to change the image used inside the [Dockerfile](backend/Dockerfile) to avoid errors.
 
 ```bash
-# Installation Command
+# Docker Installation Command (Linux)
 sudo curl -fsSL https://get.docker.com | sh
+
+# Git LFS Installation Command (Any)
+git lfs install
 ```
 
 ## Getting Started
