@@ -1,20 +1,28 @@
 # Contents
 - [Introduction](#introduction)
 - [Article (Work-In-Progress)](#article)
+  - [The Bold Claim](#the-bold-claim)
   - [Feature Dictionary](#feature-dictionary)
+  - [Model Pipeline](#model-pipeline)
+  - [Training Results](#training-results)
 - [Developers](#developers)
   - [Requirements](#requirements)
   - [Getting Started](#getting-started)
   - [Short Instructions](#short-instructions)
 
 # Introduction
-Welcome to the [hockeyanalytica.com](https://hockeyanalytica.com/) open-source xGoals model! For general readers, this document includes an article (work-in-progress) dedicated to how we built our xGoals model, what we learned, and how it performed. For developers looking to experiment with our model, there is a developers segment at the end which documents what you need to work with our repository. Input from both general readers and developers is welcomed!
+Welcome to the [hockeyanalytica.com](https://hockeyanalytica.com/) open-source Expected Goals (xG) model! For general readers, this document includes an article (work-in-progress) dedicated to how we built our xGoals model, what we learned, and how it performed. For developers looking to experiment with our model, there is a developers segment at the end which documents what you need to work with our repository. Input from both general readers and developers is welcomed!
 
 # Article
-This article is a work-in-progress, but will be updated. The only content currently present in this segment is the [Feature Dictionary](#feature-dictionary).
+Expected Goals (xGoals) calculates the probability of any given shot resulting in a goal. Typically, this statistic is referenced for assessing shot quality and a player/team's ability to generate scoring chances. However, it is our opinion that many models have shifted focus away from shot-quality and toward raw goal probability. Admittedly, this statement sounds contradictory to how xGoals is defined, but please allow us to explain before brushing off our claim.
+
+## The Bold Claim
+The main value in xGoals is that it helps us evaluate shot quality. We believe that shot quality is being inflated by xGoals models using features unrelated to shot quality. Some such features we have identified as potentially having inflationary impacts include the period, remaining time, home/away identifiers, and score states. These features certainly affect the probability of a shot being a goal, which is why they help models match actual goals scored more closely. But xGoals is not supposed to be an exact match to actual goals scored—that would be redundant. The true value of xGoals is that it tells us the quality of any given shot—even if the shot quality contradicts the actual outcome.
+
+Since we have focused so much about the importance of using features that actually reflect shot quality, let us begin with our selected features.
 
 ## Feature Dictionary
-It is worth noting that all 20 features are used regardless of whether the model is configured to train on data from all situations or specific situations like even strength, power-play, empty net, etc. Features that do not provide any new information are handled well by XGBoost and are given no weight to impact the model. For example, when we trained a model using data for only empty net situations, the feature indicating an empty net was given a weight of 0 which completely removed the feature from impacting the final output.
+We have selected 20 features for our first xGoals model, all of which we feel have a real impact on shot quality. During our testing, we have experimented with all sorts of approaches: one model per situation, models for different groupings of situations, and we even ventured into the darkness of the dreaded "one model to rule them all" approach. Throughout all these methods, we used the same 20 features for the training of all our models. Yes... even our model for empty-net-only situations used the empty net indicator during training. Fortunately, XGBoost is good at identifying features that fail to provide any value, and it reliably removes them from having any impact on the model.
 
 | Feature        | Description |
 |----------------|-------------|
@@ -26,9 +34,9 @@ It is worth noting that all 20 features are used regardless of whether the model
 | Event Angle    | The angle between a shot and its previous event. |
 | Event Distance | The distance between a shot and its previous event. |
 | Offwing        | If the shooter was on their offwing. |
-| Prev Event     | The type of event that occured before a shot. |
+| Prev Event     | The type of event that occurred before a shot. |
 | Rebound        | If a shot came on a rebound opportunity. Rebounds in this model are defined as any shot that came within 3 seconds of a previous shot attempt. |
-| Rush           | If a shot came on a rush opportunity. Rush attempts in this model are defined as any shot that came within 3 seceonds of an event from the neutral zone, or any shot that came within 5 seconds of an event from the defenzive zone. |
+| Rush           | If a shot came on a rush opportunity. Rush attempts in this model are defined as any shot that came within 3 seconds of an event from the neutral zone, or any shot that came within 5 seconds of an event from the defensive zone. |
 | Shot           | The type of shot. |
 | Shot Angle     | The angle of a shot relative to the center of the goal. A shot directly on the line between the center faceoff dot and the center of the goal has a 0 degree angle. A shot from the goal line have a 90 degree angle. |
 | Shot Distance  | Distance between a shot and the center of the goal. |
@@ -39,8 +47,16 @@ It is worth noting that all 20 features are used regardless of whether the model
 | Y Change       | The width-wise difference between a shot and its previous event. |
 | Y Flip         | If a shot and its previous event crossed the vector between both goals. |
 
+## Model Pipeline
+In case you missed it from earlier, for our model we used the xGoals gold standard: XGBoost—we love how fitting that name is. Our pipeline is pretty basic, the main thing worth noting is that our data is split into four sets: 60% train, 15% for both validation and calibration, then 10% for our test set. Four splits seems a bit odd but it was necessary to avoid leakage of the test set data into our model during its calibration, so we added a dedicated calibration set. XGBoost can push probabilities toward the extremes, so calibration is necessary to ensure that these probabilities are pulled back to more realistic values.
+
+The only other thing worth mentioning is that our pipeline can be pretty flexible when defining our scope of data to use for training. We can tell it to train one model for all situations or train situation-specific models, and we can tell it to use our full history of samples or to favor more recent samples of data. We narrowed things down to two approaches: all situations in one model, and three models split between full strength situations, special teams, and empty net situations.
+
+## Training Results
+Unfortunately, our model is still being tested and tuned so this portion of the article is still a work in progress. At the time of this writing, it generally achieves a Log Loss around 0.2, an AUC of roughly 0.77, and a calibration within 0-3% of the actual goals scored.
+
 # Developers
-This repository is (mostly) a copy + paste of the actual code used by the server running [hockeyanalytica.com](https://hockeyanalytica.com/). Irrelavent directories and files have been removed and modifications have been made to potentially sensitive information, but everything used for our xGoals model is an exact copy.
+This repository is (mostly) a copy + paste of the actual code used by the server running [hockeyanalytica.com](https://hockeyanalytica.com/). Irrelevant directories and files have been removed and modifications have been made to potentially sensitive information, but everything used for our xGoals model is an exact copy.
 
 If you prefer instant gratification or are eager to start, you can skip to the [Short Instructions](#short-instructions) segment.
 
@@ -64,8 +80,8 @@ This repository has two parts: a [Database](database/) to store our data, and a 
 | Service  | Runtime   | Description |
 |----------|-----------|-------------|
 | Docker   | Permanent | Separates runtime environments for both our database and backend. |
-| Database | Permanent | Stores our data for the xGoals model. Extra data is included for those looking to experiment with more featres! |
-| Backend  | Temporary | Processes our data for both model training and model inference. Stops immediately once it's shell session is exited. |
+| Database | Permanent | Stores our data for the xGoals model. Extra data is included for those looking to experiment with more features! |
+| Backend  | Temporary | Processes our data for both model training and model inference. Stops immediately once its shell session is exited. |
 
 To begin experimenting we must use docker to start our database, insert data into our database, then start running commands inside the backend's shell. The below commands can be used to do all this. Note that linux users may need to use `sudo` for all docker commands.
 
@@ -93,14 +109,14 @@ python -m train model
 python -m main model
 ```
 
-Both the [train](backend/train.py) and [main](backend/main.py) modules support inputs. In fact, xGoals already accepts parameters as shown below. Discluding any of the input parameters will result in thier default values being used.
+Both the [train](backend/train.py) and [main](backend/main.py) modules support inputs. In fact, xGoals already accepts parameters as shown below. Excluding any of the input parameters will result in their default values being used.
 
 ```bash
 # Training
 python -m train xgoals '{"type": "string", "scale": float, "decay": float}'
 
 # Inference
-python -m train xgoals '{"type": "string"}'
+python -m main xgoals '{"type": "string"}'
 ```
 
 | Parameter | Values | Description |
@@ -118,7 +134,7 @@ The logic used for our training and inference pipelines can be found inside [xgo
 
 You should run `truncate public.logs` on the database between each new round of inferences to ensure all xgoals values are overwritten in the database. Training is unaffected by the logs table. The logs table is included so developers can verify that generating inferences succeeded.
 
-You can use the [evaluation.sql](evaluation.sql) script to observe the evalution metrics of the inference data. This is the same script we used for evaluating our model results.
+You can use the [evaluation.sql](evaluation.sql) script to observe the evaluation metrics of the inference data. This is the same script we used for evaluating our model results.
 
 ## Short Instructions
 ### Install Docker and Git LFS

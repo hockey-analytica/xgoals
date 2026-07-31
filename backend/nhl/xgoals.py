@@ -13,6 +13,7 @@ class xGoals(Table):
         params.update({"train": 'train'}) if train else params.update({"train": None})
         self.prefix = params.setdefault('type', None)
         self.scale = params.setdefault('scale', None)
+        params.setdefault('grace', 5)
         params.setdefault('decay', 1)
         super().request(params)
         
@@ -22,21 +23,21 @@ class xGoals(Table):
     def train(self):
         data = numpy.array(object=[[record.get(key) for key in record.keys()] for record in self.data])
 
-        input_train, input_test, output_train, output_test = train_test_split(
+        input_train, input_validation, output_train, output_validation = train_test_split(
             data[:, 4:data.shape[1] - 1], 
             data[:, -1].astype(int), 
             test_size=0.4
         )
 
-        input_test, input_validation, output_test, output_validation = train_test_split(
-            input_test, 
-            output_test, 
+        input_validation, input_test, output_validation, output_test = train_test_split(
+            input_validation, 
+            output_validation, 
             test_size=0.25
         )
 
-        input_test, input_calibration, output_test, output_calibration = train_test_split(
-            input_test, 
-            output_test, 
+        input_validation, input_calibration, output_validation, output_calibration = train_test_split(
+            input_validation, 
+            output_validation, 
             test_size=0.5
         )
 
@@ -56,7 +57,7 @@ class xGoals(Table):
         model.fit(
             input_train, 
             output_train,
-            eval_set=[ (input_train, output_train), (input_test, output_test) ]
+            eval_set=[ (input_train, output_train), (input_validation, output_validation) ]
         )
 
         print('\n'.join(f"{feature}: {weight:.5f}" for feature, weight in sorted(zip([key for key in list(self.data[0].keys())[4:data.shape[1] - 1]], model.feature_importances_), key=lambda x: x[1], reverse=True)))
@@ -68,13 +69,13 @@ class xGoals(Table):
         
         model.fit(input_calibration, output_calibration)
 
-        predictions = model.predict(input_validation)
-        probabilities = model.predict_proba(input_validation)
+        predictions = model.predict(input_test)
+        probabilities = model.predict_proba(input_test)
         
-        print(classification_report(output_validation, predictions))
-        print(confusion_matrix(output_validation, predictions))
-        print("Loss:", log_loss(output_validation, probabilities[:, 1]))
-        print("ROC AUC:", roc_auc_score(output_validation, probabilities[:, 1]))
+        print(classification_report(output_test, predictions))
+        print(confusion_matrix(output_test, predictions))
+        print("Loss:", log_loss(output_test, probabilities[:, 1]))
+        print("ROC AUC:", roc_auc_score(output_test, probabilities[:, 1]))
 
         joblib.dump(model, f"/models/{self.prefix}-xgoals.gz" if self.prefix else "/models/xgoals.gz")
         self.response.close()
