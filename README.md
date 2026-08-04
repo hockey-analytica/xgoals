@@ -11,7 +11,7 @@
   - [Short Instructions](#short-instructions)
 
 # Introduction
-Welcome to the [hockeyanalytica.com](https://hockeyanalytica.com/) open-source Expected Goals (xG) model! For general readers, this document includes an article (work-in-progress) dedicated to how we built our xGoals model, what we learned, and how it performed. For developers looking to experiment with our model, there is a developers segment at the end which documents what you need to work with our repository. Input from both general readers and developers is welcomed!
+Welcome to the [hockeyanalytica.com](https://hockeyanalytica.com/) open-source Expected Goals (xG) model! For general readers, this document includes an article dedicated to how we built our xGoals model, what we learned, and how it performed. For developers looking to experiment with our model, there is a developers segment at the end which documents what you need to work with our repository. Input from both general readers and developers is welcomed!
 
 # Article
 Expected Goals (xGoals) calculates the probability of any given shot resulting in a goal. Typically, this statistic is referenced for assessing shot quality and a player/team's ability to generate scoring chances. However, it is our opinion that many models have shifted their focus away from shot-quality and toward raw goal probability. Admittedly, this statement sounds contradictory, but please allow us to explain before brushing off our claim. Keep in mind we are not trying to argue that our theory is correct. The purpose of this article is to open discussion about xGoals in case our theory is correct.
