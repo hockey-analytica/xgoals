@@ -1,8 +1,6 @@
 from utility import REGISTRY, Table
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report, confusion_matrix, roc_auc_score, log_loss
-from sklearn.calibration import CalibratedClassifierCV
-from sklearn.frozen import FrozenEstimator
 from xgboost.sklearn import XGBClassifier
 import joblib
 import numpy
@@ -12,7 +10,6 @@ class xGoals(Table):
     def request(self, params: dict = {}, train = False):
         params.update({"train": 'train'}) if train else params.update({"train": None})
         self.prefix = params.setdefault('type', None)
-        self.scale = params.setdefault('scale', None)
         params.setdefault('grace', 5)
         params.setdefault('decay', 1)
         super().request(params)
@@ -26,32 +23,26 @@ class xGoals(Table):
         input_train, input_validation, output_train, output_validation = train_test_split(
             data[:, 4:data.shape[1] - 1], 
             data[:, -1].astype(int), 
-            test_size=0.4
+            test_size=0.3
         )
 
         input_validation, input_test, output_validation, output_test = train_test_split(
-            input_validation, 
-            output_validation, 
-            test_size=0.25
-        )
-
-        input_validation, input_calibration, output_validation, output_calibration = train_test_split(
             input_validation, 
             output_validation, 
             test_size=0.5
         )
 
         model = XGBClassifier(
-            scale_pos_weight=float(self.scale) if self.scale else 1, # Balances class imbalances
+            scale_pos_weight=1, # Balances class imbalances (1 makes no change)
             eval_metric='logloss', # Performance evaluation metric
             reg_lambda=1, # Penalizes large weights
             max_depth=4, # Max tree depth. Higher depth risks overfitting
             learning_rate=0.1, # Shrinks each tree's contribution
-            n_estimators=500, # Number of trees to build
+            n_estimators=1000, # Number of trees to build
             subsample=0.8, # Fraction of training samples used per tree. Adds randomness by changing samples
             colsample_bytree=0.8, # Fraction of features used per sample. Adds randomness by changing sample features
             min_child_weight=10, # Min sum of weights in a child node
-            early_stopping_rounds=25 # Introduces early stopping if metric does not improve after n epochs
+            early_stopping_rounds=25 # Introduces early stopping if metric does not improve after n estimators
         )
         
         model.fit(
@@ -60,22 +51,15 @@ class xGoals(Table):
             eval_set=[ (input_train, output_train), (input_validation, output_validation) ]
         )
 
-        print('\n'.join(f"{feature}: {weight:.5f}" for feature, weight in sorted(zip([key for key in list(self.data[0].keys())[4:data.shape[1] - 1]], model.feature_importances_), key=lambda x: x[1], reverse=True)))
-
-        model = CalibratedClassifierCV(
-            FrozenEstimator(model),
-            method='isotonic'
-        )
-        
-        model.fit(input_calibration, output_calibration)
-
         predictions = model.predict(input_test)
         probabilities = model.predict_proba(input_test)
         
+        print('\n'.join(f"{feature}: {weight:.5f}" for feature, weight in sorted(zip([key for key in list(self.data[0].keys())[4:data.shape[1] - 1]], model.feature_importances_), key=lambda x: x[1], reverse=True)))
         print(classification_report(output_test, predictions))
         print(confusion_matrix(output_test, predictions))
         print("Loss:", log_loss(output_test, probabilities[:, 1]))
         print("ROC AUC:", roc_auc_score(output_test, probabilities[:, 1]))
+        print(f"Calibration: {(100 * probabilities[:, 1].sum() / output_test.sum()) - 100}%")
 
         joblib.dump(model, f"/models/{self.prefix}-xgoals.gz" if self.prefix else "/models/xgoals.gz")
         self.response.close()
