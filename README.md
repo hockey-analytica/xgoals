@@ -200,6 +200,14 @@ docker compose run --rm backend sh
 docker compose run -d --rm backend sh -c "<command>"
 ```
 
+If you wish to export the database data to a csv file, you can use the below placeholder query. To run queries on your machine outside the docker environments, we suggest installing [pgAdmin](https://www.pgadmin.org/).
+
+```bash
+COPY (PASTE QUERY TEXT HERE) 
+TO '/absolute/path/to/output.csv' 
+WITH (FORMAT csv, HEADER true);
+```
+
 To start training or making inferences, we need to use the [train](backend/train.py) and [main](backend/main.py) modules from inside the backend's shell as shown below. It is worth noting that the command line supports any model as an input. However, xgoals is currently the only existing model.
 
 ```bash
